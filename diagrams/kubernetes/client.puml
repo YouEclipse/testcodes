@@ -1,0 +1,233 @@
+@startuml kubernetes-client-go-rest
+!include https://raw.githubusercontent.com/bschwarz/puml-themes/master/themes/materia/puml-theme-materia.puml
+
+
+
+package k8s.io/client-go/rest <<Frame>> {
+    interface Interface {
+       + GetRateLimiter() flowcontrol.RateLimiter
+	   + Verb(verb string) *Request
+	   + Post() *Request
+	   + Put() *Request
+	   + Patch(pt types.PatchType) *Request
+	   + Get() *Request
+	   + Delete() *Request
+	   + APIVersion() schema.GroupVersion
+        
+    }
+    class RestClient << (S,#FF7700) >> {
+    }
+    Interface  <|-- RestClient:implement
+}
+
+
+
+@enduml
+
+@startuml kubernetes-client-go-discovery
+!include https://raw.githubusercontent.com/bschwarz/puml-themes/master/themes/materia/puml-theme-materia.puml
+
+package k8s.io/client-go/discovery <<Frame>> {
+    interface ServerGroupsInterface{
+	    + ServerGroups() (*metav1.APIGroupList, error)
+    }
+
+	interface ServerResourcesInterface{
+        + ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error)
+	    + ServerResources() ([]*metav1.APIResourceList, error)
+	    + ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
+	    + ServerPreferredResources() ([]*metav1.APIResourceList, error)
+	    + ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error)
+    }
+	interface ServerVersionInterface{
+        + ServerVersion() (*version.Info, error)
+    }
+
+	interface OpenAPISchemaInterface{
+        + OpenAPISchema() (*openapi_v2.Document, error)
+    }
+    interface  DiscoveryInterface   {
+	    + RESTClient() restclient.Interface 
+    }
+    interface CachedDiscoveryInterface{
+        + Fresh() bool
+	    + Invalidate()
+    }
+
+    class DiscoveryClient << (S,#FF7700) >>{
+
+    }
+DiscoveryInterface --* ServerGroupsInterface:composite
+DiscoveryInterface --* ServerResourcesInterface:composite
+DiscoveryInterface --* ServerVersionInterface:composite
+DiscoveryInterface --* OpenAPISchemaInterface:composite
+
+
+CachedDiscoveryInterface--*DiscoveryInterface:composite
+
+DiscoveryClient --|> DiscoveryInterface:implement 
+}
+
+package k8s.io/client-go/discovery/disk <<Frame>>{
+    class CachedDiscoveryClient << (S,#FF7700) >> {
+    }
+CachedDiscoveryClient --|> CachedDiscoveryInterface:implement
+CachedDiscoveryClient --# DiscoveryInterface:aggregate
+}
+
+package k8s.io/client-go/discovery/memory <<Frame>> { 
+    class memCacheClient << (S,#FF7700) >> {
+    }
+    memCacheClient --|>CachedDiscoveryInterface:implement
+    memCacheClient --* DiscoveryInterface:composite
+}
+@enduml
+
+
+@startuml kubernetes-client-go-clientset
+!include https://raw.githubusercontent.com/bschwarz/puml-themes/master/themes/materia/puml-theme-materia.puml
+
+package k8s.io/client-go/kubernetes {
+    interface Interface {
+        + Discovery() discovery.DiscoveryInterface
+	    + AdmissionregistrationV1() admissionregistrationv1.AdmissionregistrationV1Interface
+        + AdmissionregistrationV1beta1() admissionregistrationv1beta1.AdmissionregistrationV1beta1Interface
+	    + AppsV1() appsv1.AppsV1Interface
+	    + AppsV1beta1() appsv1beta1.AppsV1beta1Interface
+	    + AppsV1beta2() appsv1beta2.AppsV1beta2Interface
+        {method} ...
+    }
+    class Clientset << (S,#FF7700) >> {
+
+    }
+    Clientset --|> Interface:implement
+}
+
+@enduml
+
+@startuml kubernetes-client-go-dynamic
+!include https://raw.githubusercontent.com/bschwarz/puml-themes/master/themes/materia/puml-theme-materia.puml
+
+package k8s.io/client-go/dynamic {
+    class dynamicClient << (S,#FF7700) >> {
+    }
+    class dynamicResourceClient << (S,#FF7700) >> {
+    }
+dynamicResourceClient --# dynamicClient:aggregate
+}
+
+@enduml
+
+
+
+
+
+@startuml kubernetes-client-go-client-all
+!include https://raw.githubusercontent.com/bschwarz/puml-themes/master/themes/materia/puml-theme-materia.puml
+
+title client-go Client对象 类图
+
+'k8s.io/client-go/rest
+package rest <<Frame>> {
+    interface rest.Interface {
+       + GetRateLimiter() flowcontrol.RateLimiter
+	   + Verb(verb string) *Request
+	   + Post() *Request
+	   + Put() *Request
+	   + Patch(pt types.PatchType) *Request
+	   + Get() *Request
+	   + Delete() *Request
+	   + APIVersion() schema.GroupVersion
+        
+    }
+    class rest.RestClient << (S,#FF7700) >> {
+    }
+    rest.Interface  <|-- rest.RestClient:implement
+}
+
+'k8s.io/client-go/discovery
+package discovery <<Frame>> {
+    interface ServerGroupsInterface{
+	    + ServerGroups() (*metav1.APIGroupList, error)
+    }
+
+	interface ServerResourcesInterface{
+        + ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error)
+	    + ServerResources() ([]*metav1.APIResourceList, error)
+	    + ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
+	    + ServerPreferredResources() ([]*metav1.APIResourceList, error)
+	    + ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error)
+    }
+	interface ServerVersionInterface{
+        + ServerVersion() (*version.Info, error)
+    }
+
+	interface OpenAPISchemaInterface{
+        + OpenAPISchema() (*openapi_v2.Document, error)
+    }
+    interface  DiscoveryInterface   {
+	    + RESTClient() restclient.Interface 
+    }
+    interface CachedDiscoveryInterface{
+        + Fresh() bool
+	    + Invalidate()
+    }
+
+    class discovery.DiscoveryClient << (S,#FF7700) >>{
+
+    }
+    DiscoveryInterface --* ServerGroupsInterface:composite
+    DiscoveryInterface --* ServerResourcesInterface:composite
+    DiscoveryInterface --* ServerVersionInterface:composite
+    DiscoveryInterface --* OpenAPISchemaInterface:composite
+
+
+    CachedDiscoveryInterface--*DiscoveryInterface:composite
+
+    discovery.DiscoveryClient --|> DiscoveryInterface:implement 
+    discovery.DiscoveryClient --# rest.Interface:aggregate
+
+}
+
+package k8s.io/client-go/discovery/disk <<Frame>>{
+    class CachedDiscoveryClient << (S,#FF7700) >> {
+    }
+    CachedDiscoveryClient --|> CachedDiscoveryInterface:implement
+    CachedDiscoveryClient --# DiscoveryInterface:aggregate
+}
+
+package k8s.io/client-go/discovery/memory <<Frame>> { 
+    class memCacheClient << (S,#FF7700) >> {
+    }
+    memCacheClient --|>CachedDiscoveryInterface:implement
+    memCacheClient --* DiscoveryInterface:composite
+}
+
+'k8s.io/client-go/kubernetes
+package kubernetes <<Frame>> {
+    interface Interface {
+        + Discovery() discovery.DiscoveryInterface
+	    + AdmissionregistrationV1() admissionregistrationv1.AdmissionregistrationV1Interface
+        + AdmissionregistrationV1beta1() admissionregistrationv1beta1.AdmissionregistrationV1beta1Interface
+	    + AppsV1() appsv1.AppsV1Interface
+	    + AppsV1beta1() appsv1beta1.AppsV1beta1Interface
+	    + AppsV1beta2() appsv1beta2.AppsV1beta2Interface
+        {method} ...
+    }
+    class Clientset << (S,#FF7700) >> {
+    }
+    Clientset --|> Interface:implement
+    Clientset --# discovery.DiscoveryClient:aggregate
+}
+'k8s.io/client-go/dynamic
+package dynamic <<Frame>>  {
+    class dynamicClient << (S,#FF7700) >> {
+    }
+    class dynamicResourceClient << (S,#FF7700) >> {
+    }
+    dynamicResourceClient --# dynamicClient:aggregate
+    dynamicClient --# rest.RestClient:aggregate
+}
+
+
+@enduml
